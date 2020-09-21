@@ -362,7 +362,7 @@ public class ConsturctController {
 
                             List<Item> itemList = responseRes.getResponse().getBody().getItems().getItem();
                             totalCount = responseRes.getResponse().getBody().getTotalCount().intValue();
-만
+
                             for (Item item : itemList) {
                                 if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
                                     ConstructTitleEntity constructTitleEntityTemp = constructTitleMapper.toConstructTitleEntity(item);
