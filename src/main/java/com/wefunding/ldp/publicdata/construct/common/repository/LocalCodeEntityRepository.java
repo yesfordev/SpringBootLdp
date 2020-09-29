@@ -17,4 +17,7 @@ public interface LocalCodeEntityRepository extends JpaRepository<LocalCodeEntity
 
     @Query(value = "select * from construct.local_code lc where lc.depth>='3' and lc.status='1'", nativeQuery = true)
     List <LocalCodeEntity> getLocalCodeEntityList();
+
+    @Query(value = "select * from construct.local_code lc where lc.depth>='3' and lc.status='1' and lc.id >= 41716", nativeQuery = true)
+    List <LocalCodeEntity> getLocalCodeEntityListById();
 }

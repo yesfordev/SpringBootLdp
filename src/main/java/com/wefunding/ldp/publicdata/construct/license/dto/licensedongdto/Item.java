@@ -1,24 +1,11 @@
-package com.wefunding.ldp.publicdata.construct.license.entity;
+package com.wefunding.ldp.publicdata.construct.license.dto.licensedongdto;
 
+import lombok.Builder;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.*;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-/**
- * Created by yes on 2020/09/24
- */
-
+@Builder
 @Data
-@Entity
-@Table(name = "license_dong", schema = "construct")
-public class LicenseDongEntity implements Serializable {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+public class Item {
 
     private Integer rnum;
 
@@ -75,10 +62,4 @@ public class LicenseDongEntity implements Serializable {
     private double vlRatEstmTotArea;
 
     private String crtnDay;
-
-    @CreationTimestamp
-    private LocalDateTime regDt;
-
-    @UpdateTimestamp
-    private LocalDateTime updDt;
 }
