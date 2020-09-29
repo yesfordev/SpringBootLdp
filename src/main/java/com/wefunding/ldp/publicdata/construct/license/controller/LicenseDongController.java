@@ -1,16 +1,11 @@
 package com.wefunding.ldp.publicdata.construct.license.controller;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.wefunding.ldp.publicdata.construct.common.entity.LocalCodeEntity;
 import com.wefunding.ldp.publicdata.construct.common.repository.LocalCodeEntityRepository;
+import com.wefunding.ldp.publicdata.construct.license.dto.licensedongdto.LicenseDongRes;
 import com.wefunding.ldp.publicdata.construct.common.utils.PublicDataUtils;
-import com.wefunding.ldp.publicdata.construct.license.dto.licensebasicdto.Item;
-import com.wefunding.ldp.publicdata.construct.license.dto.licensebasicdto.LicenseBasicRes;
-import com.wefunding.ldp.publicdata.construct.license.entity.LicenseBasicEntity;
-import com.wefunding.ldp.publicdata.construct.license.mapper.LicenseBasicEntityMapper;
-import com.wefunding.ldp.publicdata.construct.license.repository.LicenseBasicEntityRepository;
-import com.wefunding.ldp.publicdata.construct.license.service.LicenseBasicService;
+import com.wefunding.ldp.publicdata.construct.license.service.LicenseDongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
@@ -23,19 +18,13 @@ import java.net.ProtocolException;
 import java.util.List;
 
 /**
- * Created by yes on 2020/09/24
- * 건축물인허가 기본개요 조회 Controller
+ * Created by yes on 2020/09/28
+ * 건축인허가 동별개요 조회
  */
 
 @RestController
-@RequestMapping("/construct/licensebasic")
-public class LicenseBasicController {
-
-    private final LocalCodeEntityRepository localCodeEntityRepository;
-
-    private final LicenseBasicService licenseBasicService;
-
-    private final RetryTemplate retryTemplate;
+@RequestMapping("/construct/licensedong")
+public class LicenseDongController {
 
     private int numOfRows = 2000; // 페이지 당 item 출력 갯수
 
@@ -46,24 +35,30 @@ public class LicenseBasicController {
     @Value("${serviceKey}")
     private String serviceKey;
 
+    private final LocalCodeEntityRepository localCodeEntityRepository;
+
+    private final LicenseDongService licenseDongService;
+
+    private final RetryTemplate retryTemplate;
+
     @Autowired
-    public LicenseBasicController(LocalCodeEntityRepository localCodeEntityRepository, LicenseBasicService licenseBasicService, RetryTemplate retryTemplate) {
+    public LicenseDongController(LocalCodeEntityRepository localCodeEntityRepository, LicenseDongService licenseDongService, RetryTemplate retryTemplate) {
         this.localCodeEntityRepository = localCodeEntityRepository;
-        this.licenseBasicService = licenseBasicService;
+        this.licenseDongService = licenseDongService;
+//        this.connectUrlUtils = connectUrlUtils;
         this.retryTemplate = retryTemplate;
     }
 
-
     /**
-     * 인허가정보 기본개요 수집
+     * 인허가정보 동별조회 수집
      * @param startDate 검색 시작일
      * @param endDate 검색 종료일
      * @return returnCount, 종료 메세지
      */
     @GetMapping("/insert")
-    public String saveLicenseBasic(@RequestParam("startDate") String startDate, @RequestParam("endDate") String endDate) {
+    public String saveLicenseDong(@RequestParam("startDate") String startDate, @RequestParam("endDate") String endDate) {
 
-        LicenseBasicRes licenseBasicRes;
+        LicenseDongRes licenseDongRes;
         PublicDataUtils publicDataUtils = new PublicDataUtils();
         Gson gson = new Gson();
         int totalCount = 0;
@@ -71,8 +66,7 @@ public class LicenseBasicController {
 
         try {
 //            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // 15348 이상
-
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // id>=17934
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
@@ -87,11 +81,9 @@ public class LicenseBasicController {
                 int pageNo = 1;
 
                 while (true) {
-                    String urlstr = "http://apis.data.go.kr/1611000/ArchPmsService/getApBasisOulnInfo?" +
+                    String urlstr = "http://apis.data.go.kr/1611000/ArchPmsService/getApDongOulnInfo?" +
                             "sigunguCd=" + sigungucd +
-//                            "sigunguCd=" + 11110 +
                             "&bjdongCd=" + bjdongcd +
-//                            "&bjdongCd=" + 16600 +
                             "&platGbCd=" + platGbCd +
                             "&numOfRows=" + numOfRows +
                             "&startDate=" + startDate +
@@ -114,11 +106,11 @@ public class LicenseBasicController {
                     totalCount = publicDataUtils.getTotalCount(result);
 
                     if (totalCount == 1) {
-                        licenseBasicService.saveLicenseBasic(gson, result);
+                        licenseDongService.saveLicenseDong(gson, result);
 
                         break;
                     } else if (totalCount > 1) {
-                        licenseBasicService.saveAllLicenseBasicList(gson, totalCount, result);
+                        licenseDongService.saveAllLicenseDongList(gson, totalCount, result);
 
                         pageNo++;
                     } else break;
@@ -144,6 +136,7 @@ public class LicenseBasicController {
     public String exceedsRequests(NumberFormatException e) {
         System.err.println(e.getClass());
         e.printStackTrace();
-        return "기본개요 조회의 일일 트래픽이 초과되었습니다. 이어서 수행해야 할 local_code id: " + id;
+        return "동별 조회의 일일 트래픽이 초과되었습니다. 이어서 수행해야 할 local_code id: " + id;
     }
+
 }

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.wefunding.ldp.publicdata.construct.common.entity.LocalCodeEntity;
 import com.wefunding.ldp.publicdata.construct.common.repository.LocalCodeEntityRepository;
+import com.wefunding.ldp.publicdata.construct.common.utils.PublicDataUtils;
 import com.wefunding.ldp.publicdata.construct.title.dto.RegisterTitleRes;
 import com.wefunding.ldp.publicdata.construct.title.entity.RegisterTitleEntity;
 import com.wefunding.ldp.publicdata.construct.title.mapper.RegisterTitleMapper;
@@ -11,20 +12,17 @@ import com.wefunding.ldp.publicdata.construct.title.dto.Item;
 import com.wefunding.ldp.publicdata.construct.title.repository.RegisterTitleEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,11 +39,14 @@ public class RegisterTitleController {
 
     private final RegisterTitleMapper registerTitleMapper;
 
+    private final RetryTemplate retryTemplate;
+
     @Autowired
-    public RegisterTitleController(RegisterTitleEntityRepository registerTitleEntityRepository, LocalCodeEntityRepository localCodeEntityRepository, RegisterTitleMapper registerTitleMapper) {
+    public RegisterTitleController(RegisterTitleEntityRepository registerTitleEntityRepository, LocalCodeEntityRepository localCodeEntityRepository, RegisterTitleMapper registerTitleMapper, RetryTemplate retryTemplate) {
         this.registerTitleEntityRepository = registerTitleEntityRepository;
         this.localCodeEntityRepository = localCodeEntityRepository;
         this.registerTitleMapper = registerTitleMapper;
+        this.retryTemplate = retryTemplate;
     }
 
     private int numOfRows = 2000; // 페이지 당 item 출력 갯수
@@ -96,9 +97,7 @@ public class RegisterTitleController {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
-                if (depth >= 3 && status == 1) {
-                    System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
-                }
+                System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -114,7 +113,8 @@ public class RegisterTitleController {
 //    @Transactional
     public String insertSeoulConstruct() {
 
-        RegisterTitleRes registerTitleRes = new RegisterTitleRes();
+        RegisterTitleRes registerTitleRes;
+        PublicDataUtils publicDataUtils = new PublicDataUtils();
         Gson gson = new Gson();
         int totalCount = 0;
         int requestCount = 0; // 요청 횟수 측정
@@ -148,22 +148,19 @@ public class RegisterTitleController {
 
                         requestCount++;
 
-                        URL url = new URL(urlstr);
 
                         String result = "";
 
-                        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                        urlConnection.setRequestMethod("GET");
+                        // IOException 발생 시, 최대 10번까지 재시도 로직
+                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+                        System.out.println("result: " + result);
 
-                        String returnLine;
-                        while ((returnLine = br.readLine()) != null) {
-                            result = result.concat(returnLine);
-                        }
-                        urlConnection.disconnect();
+                        int countStart = result.indexOf("totalCount\":");
 
-                        if (result.length() > 140) {
+                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+
+                        if (totalCount >= 1) {
                             registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
                             }.getType());
 
@@ -212,7 +209,8 @@ public class RegisterTitleController {
             return "시 지명을 입력해주세요. ex) 이천시, 서울특별시";
         }
 
-        RegisterTitleRes registerTitleRes = new RegisterTitleRes();
+        RegisterTitleRes registerTitleRes;
+        PublicDataUtils publicDataUtils = new PublicDataUtils();
         Gson gson = new Gson();
         int totalCount = 0;
         int requestCount = 0;
@@ -246,22 +244,18 @@ public class RegisterTitleController {
 
                         requestCount++;
 
-                        URL url = new URL(urlstr);
-
                         String result = "";
 
-                        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                        urlConnection.setRequestMethod("GET");
+                        // IOException 발생 시, 최대 10번까지 재시도 로직
+                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+                        System.out.println("result: " + result);
 
-                        String returnLine;
-                        while ((returnLine = br.readLine()) != null) {
-                            result = result.concat(returnLine);
-                        }
-                        urlConnection.disconnect();
+                        int countStart = result.indexOf("totalCount\":");
 
-                        if (result.length() > 140) {
+                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+
+                        if (totalCount >= 1) {
                             registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
                             }.getType());
 
@@ -306,6 +300,7 @@ public class RegisterTitleController {
     public String insertAllConstruct() {
 
         RegisterTitleRes responseRes = new RegisterTitleRes();
+        PublicDataUtils publicDataUtils = new PublicDataUtils();
         Gson gson = new Gson();
         int totalCount = 0;
         int requestCount = 0;
@@ -339,22 +334,18 @@ public class RegisterTitleController {
 
                         requestCount++;
 
-                        URL url = new URL(urlstr);
-
                         String result = "";
 
-                        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                        urlConnection.setRequestMethod("GET");
+                        // IOException 발생 시, 최대 10번까지 재시도 로직
+                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+                        System.out.println("result: " + result);
 
-                        String returnLine;
-                        while ((returnLine = br.readLine()) != null) {
-                            result = result.concat(returnLine);
-                        }
-                        urlConnection.disconnect();
+                        int countStart = result.indexOf("totalCount\":");
 
-                        if (result.length() > 140) {
+                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+
+                        if (totalCount >= 1) {
                             responseRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
                             }.getType());
 
