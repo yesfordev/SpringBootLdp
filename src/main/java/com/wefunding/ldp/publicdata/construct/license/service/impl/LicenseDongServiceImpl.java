@@ -47,8 +47,7 @@ public class LicenseDongServiceImpl implements LicenseDongService {
 
     @Override
     public void saveAllLicenseDongList(Gson gson, int totalCount, String result) {
-        LicenseDongRes licenseDongRes;
-        licenseDongRes = gson.fromJson(result, new TypeToken<LicenseDongRes>() {
+        LicenseDongRes licenseDongRes = gson.fromJson(result, new TypeToken<LicenseDongRes>() {
         }.getType());
 
         List<Item> itemList = licenseDongRes.getResponse().getBody().getItems().getItem();

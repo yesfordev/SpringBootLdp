@@ -10,13 +10,11 @@ import com.wefunding.ldp.publicdata.construct.title.entity.RegisterTitleEntity;
 import com.wefunding.ldp.publicdata.construct.title.mapper.RegisterTitleMapper;
 import com.wefunding.ldp.publicdata.construct.title.dto.Item;
 import com.wefunding.ldp.publicdata.construct.title.repository.RegisterTitleEntityRepository;
+import com.wefunding.ldp.publicdata.construct.title.service.RegisterTitleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
@@ -41,17 +39,22 @@ public class RegisterTitleController {
 
     private final RetryTemplate retryTemplate;
 
+    private final RegisterTitleService registerTitleService;
+
     @Autowired
-    public RegisterTitleController(RegisterTitleEntityRepository registerTitleEntityRepository, LocalCodeEntityRepository localCodeEntityRepository, RegisterTitleMapper registerTitleMapper, RetryTemplate retryTemplate) {
+    public RegisterTitleController(RegisterTitleEntityRepository registerTitleEntityRepository, LocalCodeEntityRepository localCodeEntityRepository, RegisterTitleMapper registerTitleMapper, RetryTemplate retryTemplate, RegisterTitleService registerTitleService) {
         this.registerTitleEntityRepository = registerTitleEntityRepository;
         this.localCodeEntityRepository = localCodeEntityRepository;
         this.registerTitleMapper = registerTitleMapper;
         this.retryTemplate = retryTemplate;
+        this.registerTitleService = registerTitleService;
     }
 
     private int numOfRows = 2000; // 페이지 당 item 출력 갯수
 
     private int platGbCd = 0; // 대지
+
+    private Integer id;
 
     @Value("${serviceKey}")
     private String serviceKey;
@@ -66,7 +69,7 @@ public class RegisterTitleController {
             List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
 
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
-                Integer id = localCodeEntity.getId();
+                id = localCodeEntity.getId();
                 String sigungucd = localCodeEntity.getSigunguCd();
                 String bjdongcd = localCodeEntity.getBjdongCd();
                 String name = localCodeEntity.getName();
@@ -127,7 +130,7 @@ public class RegisterTitleController {
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
 //                if (depth >= 3 && status == 1) {
-                    Integer id = localCodeEntity.getId();
+                    id = localCodeEntity.getId();
                     String sigungucd = localCodeEntity.getSigunguCd();
                     String bjdongcd = localCodeEntity.getBjdongCd();
                     String name = localCodeEntity.getName();
@@ -223,7 +226,7 @@ public class RegisterTitleController {
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
 //                if (depth >= 3 && status == 1) {
-                    Integer id = localCodeEntity.getId();
+                    id = localCodeEntity.getId();
                     String sigungucd = localCodeEntity.getSigunguCd();
                     String bjdongcd = localCodeEntity.getBjdongCd();
                     String name = localCodeEntity.getName();
@@ -296,24 +299,24 @@ public class RegisterTitleController {
      * @return
      */
     @GetMapping("/insertAll")
-    @Transactional
+//    @Transactional
     public String insertAllConstruct() {
 
-        RegisterTitleRes responseRes = new RegisterTitleRes();
         PublicDataUtils publicDataUtils = new PublicDataUtils();
         Gson gson = new Gson();
         int totalCount = 0;
         int requestCount = 0;
 
         try {
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
+//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); //1113부터(부산) // 2865
 
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
 //                if (depth >= 3 && status == 1) {
-                    Integer id = localCodeEntity.getId();
+                    id = localCodeEntity.getId();
                     String sigungucd = localCodeEntity.getSigunguCd();
                     String bjdongcd = localCodeEntity.getBjdongCd();
                     String name = localCodeEntity.getName();
@@ -332,40 +335,33 @@ public class RegisterTitleController {
                                 "&_type=json" +
                                 "&ServiceKey=" + serviceKey;
 
-                        requestCount++;
-
                         String result = "";
 
-                        // IOException 발생 시, 최대 10번까지 재시도 로직
+                        // IOException 발생 시, 최대 7번까지 재시도 로직
                         result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        System.out.println("result: " + result);
+                        requestCount++;
 
-                        int countStart = result.indexOf("totalCount\":");
+//                        System.out.println("result: " + result);
 
-                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+//                        totalCount = publicDataUtils.getTotalCount(result);
+                        String finalResult = result;
+                        totalCount = retryTemplate.execute(context ->publicDataUtils.getTotalCount(finalResult));
 
-                        if (totalCount >= 1) {
-                            responseRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
-                            }.getType());
+                        if(totalCount == 1) {
+                            registerTitleService.saveRegistserTitle(gson, result);
 
-                            List<Item> itemList = responseRes.getResponse().getBody().getItems().getItem();
-                            totalCount = responseRes.getResponse().getBody().getTotalCount().intValue();
+                            break;
+                        } else if (totalCount >1) {
+                            registerTitleService.saveRegisterTitleList(gson, totalCount, result);
 
-                            for (Item item : itemList) {
-                                if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
-                                    RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-                                    registerTitleEntityRepository.save(registerTitleEntityTemp);
-                                    System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + responseRes.getResponse().getBody().getPageNo());
-                                }
-                            }
                             pageNo++;
                         } else break;
 
                         if (totalCount / numOfRows + 1 < pageNo) break;
                     }
-                }
                 System.out.println("request count: " + requestCount);
+                }
 //            }
             System.out.println("item save finished");
         } catch (UnsupportedEncodingException e) {
@@ -380,4 +376,11 @@ public class RegisterTitleController {
 
         return "construct All information insert success, requestCount: " + requestCount;
     }
+
+//    @ExceptionHandler(NumberFormatException.class)
+//    public String exceedsRequests(NumberFormatException e) {
+//        System.err.println(e.getClass());
+//        e.printStackTrace();
+//        return "건축물대장의 표제 조회의 일일 트래픽이 초과되었습니다. 이어서 수행해야 할 local_code id: " + id;
+//    }
 }

@@ -38,12 +38,4 @@ public class PublicDataUtils {
         totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
         return totalCount;
     }
-
-    public String getItemString(String result) {
-        int start = result.indexOf("item\":");
-        int end = result.lastIndexOf("},\"numOfRows");
-
-        String itemString = result.substring(start + "item\":".length(), end);
-        return itemString;
-    }
 }

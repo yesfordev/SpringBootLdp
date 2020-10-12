@@ -66,7 +66,7 @@ public class LicenseDongController {
 
         try {
 //            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // id>=17934
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // id>=42811
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
@@ -129,7 +129,7 @@ public class LicenseDongController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "construct License Basic(인허가정보 기본개요) information insert success, requestCount: " + requestCount;
+        return "construct License Dong(인허가정보 동별) information insert success, requestCount: " + requestCount;
     }
 
     @ExceptionHandler(NumberFormatException.class)

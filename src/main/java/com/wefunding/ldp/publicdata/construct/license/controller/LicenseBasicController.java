@@ -109,7 +109,7 @@ public class LicenseBasicController {
 
                     requestCount++;
 
-                    System.out.println("result: " + result);
+//                    System.out.println("result: " + result);.
 
                     totalCount = publicDataUtils.getTotalCount(result);
 
