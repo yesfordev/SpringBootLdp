@@ -1,13 +1,7 @@
 package com.wefunding.ldp.publicdata.construct.title.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Builder
 @Data
 public class Item {
 
