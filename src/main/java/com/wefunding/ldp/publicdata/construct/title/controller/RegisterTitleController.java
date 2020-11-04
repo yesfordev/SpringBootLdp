@@ -1,5 +1,6 @@
 package com.wefunding.ldp.publicdata.construct.title.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.wefunding.ldp.publicdata.construct.common.entity.LocalCodeEntity;
@@ -10,6 +11,9 @@ import com.wefunding.ldp.publicdata.construct.title.entity.RegisterTitleEntity;
 import com.wefunding.ldp.publicdata.construct.title.mapper.RegisterTitleMapper;
 import com.wefunding.ldp.publicdata.construct.title.dto.Item;
 import com.wefunding.ldp.publicdata.construct.title.repository.RegisterTitleEntityRepository;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
@@ -33,6 +37,8 @@ import java.util.List;
 @RequestMapping("/construct/title")
 public class RegisterTitleController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterTitleController.class);
+
     private final RegisterTitleEntityRepository registerTitleEntityRepository;
 
     private final LocalCodeEntityRepository localCodeEntityRepository;
@@ -49,7 +55,8 @@ public class RegisterTitleController {
         this.retryTemplate = retryTemplate;
     }
 
-    private int numOfRows = 2000; // 페이지 당 item 출력 갯수
+    //test를 위해 2000->10으로 변경
+    private int numOfRows = 10; // 페이지 당 item 출력 갯수
 
     private int platGbCd = 0; // 대지
 
@@ -379,5 +386,55 @@ public class RegisterTitleController {
         }
 
         return "construct All information insert success, requestCount: " + requestCount;
+    }
+
+    /**
+     * [참고] 테스트
+     * @return
+     */
+    @GetMapping("/insertAllTest")
+    @Transactional
+    public String insertAllTestConstruct() throws IOException {
+
+        PublicDataUtils publicDataUtils = new PublicDataUtils();
+        List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
+
+        for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
+            int depth = Integer.parseInt(localCodeEntity.getDepth());
+            int status = Integer.parseInt(localCodeEntity.getStatus());
+
+            Integer id = localCodeEntity.getId();
+            String sigungucd = localCodeEntity.getSigunguCd();
+            String bjdongcd = localCodeEntity.getBjdongCd();
+            String name = localCodeEntity.getName();
+
+            LOGGER.info("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
+
+            int pageNo = 1;
+
+            String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
+                    "sigunguCd=" + sigungucd +
+                    "&bjdongCd=" + bjdongcd +
+                    "&platGbCd=" + platGbCd +
+                    "&numOfRows=" + numOfRows +
+                    "&pageNo=" + pageNo +
+                    "&_type=json" +
+                    "&ServiceKey=" + serviceKey;
+
+
+            JSONObject resObject = publicDataUtils.connectUrlReturnObject(urlstr);
+
+            //LOGGER.info("RETURN ORIGIN" + resObject);
+
+            ObjectMapper objectMapper01 = new ObjectMapper();
+            RegisterTitleRes responseDomain = objectMapper01.readValue(resObject.toString(), RegisterTitleRes.class);
+
+            LOGGER.info("return result: " + responseDomain.getResponse().getHeader().toString());
+            LOGGER.info("총 갯수: " + responseDomain.getResponse().getBody().getTotalCount().toString());
+            LOGGER.info("총 아이템 갯 수: " + responseDomain.getResponse().getBody().getItems().getItem().size());
+
+        }
+
+        return "test complete";
     }
 }
