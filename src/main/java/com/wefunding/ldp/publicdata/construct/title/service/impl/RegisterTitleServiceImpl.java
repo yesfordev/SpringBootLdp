@@ -2,15 +2,19 @@ package com.wefunding.ldp.publicdata.construct.title.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.wefunding.ldp.publicdata.construct.title.controller.RegisterTitleController;
 import com.wefunding.ldp.publicdata.construct.title.dto.Item;
 import com.wefunding.ldp.publicdata.construct.title.dto.RegisterTitleRes;
 import com.wefunding.ldp.publicdata.construct.title.entity.RegisterTitleEntity;
 import com.wefunding.ldp.publicdata.construct.title.mapper.RegisterTitleMapper;
 import com.wefunding.ldp.publicdata.construct.title.repository.RegisterTitleEntityRepository;
 import com.wefunding.ldp.publicdata.construct.title.service.RegisterTitleService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,6 +22,8 @@ import java.util.List;
  */
 @Service
 public class RegisterTitleServiceImpl implements RegisterTitleService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterTitleServiceImpl.class);
 
     private final RegisterTitleMapper registerTitleMapper;
 
@@ -38,7 +44,7 @@ public class RegisterTitleServiceImpl implements RegisterTitleService {
 
         Item itemTemp = gson.fromJson(itemString, Item.class);
 
-        if(itemTemp.getMainPurpsCd().equals("18000")) {
+        if (itemTemp.getMainPurpsCd().equals("18000")) {
             RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(itemTemp);
             registerTitleEntityRepository.save(registerTitleEntityTemp);
             System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: 1");
@@ -52,12 +58,24 @@ public class RegisterTitleServiceImpl implements RegisterTitleService {
 
         List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
 
+//        for (Item item : itemList) {
+//            if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
+//                RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
+//                registerTitleEntityRepository.save(registerTitleEntityTemp);
+//                System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
+//            }
+//        }
+
+        // 추가
+        List<RegisterTitleEntity> entityList = new ArrayList<>();
+
         for (Item item : itemList) {
-            if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
+//            if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
                 RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-                registerTitleEntityRepository.save(registerTitleEntityTemp);
-                System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
-            }
+                entityList.add(registerTitleEntityTemp);
+//            }
         }
+        registerTitleEntityRepository.saveAll(entityList);
+        LOGGER.info("item List save, pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
     }
 }

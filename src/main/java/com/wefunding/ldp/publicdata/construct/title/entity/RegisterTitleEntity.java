@@ -10,10 +10,17 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "register_title", schema = "construct")
+@Table(name = "register_title_test_test_test", schema = "public")
+@SequenceGenerator(
+        name = "register_title_test_test_test_id_seq_generator",
+        sequenceName = "register_title_test_test_test_id_seq",
+        initialValue = 1,
+        allocationSize = 50)
 public class RegisterTitleEntity implements Serializable {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "register_title_test_test_test_id_seq_generator")
     private Integer id;
 
     private Integer rnum;

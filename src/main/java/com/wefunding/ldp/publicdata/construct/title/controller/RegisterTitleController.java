@@ -11,6 +11,8 @@ import com.wefunding.ldp.publicdata.construct.title.mapper.RegisterTitleMapper;
 import com.wefunding.ldp.publicdata.construct.title.dto.Item;
 import com.wefunding.ldp.publicdata.construct.title.repository.RegisterTitleEntityRepository;
 import com.wefunding.ldp.publicdata.construct.title.service.RegisterTitleService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
@@ -30,6 +32,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/construct/title")
 public class RegisterTitleController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterTitleController.class);
 
     private final RegisterTitleEntityRepository registerTitleEntityRepository;
 
@@ -308,8 +312,8 @@ public class RegisterTitleController {
         int requestCount = 0;
 
         try {
-//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); //1113부터(부산) // 2865
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
+//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); //1113부터(부산) // 2865
 
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
@@ -321,7 +325,7 @@ public class RegisterTitleController {
                     String bjdongcd = localCodeEntity.getBjdongCd();
                     String name = localCodeEntity.getName();
 
-                    System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
+                    LOGGER.info("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
 
                     int pageNo = 1;
 
@@ -360,7 +364,7 @@ public class RegisterTitleController {
 
                         if (totalCount / numOfRows + 1 < pageNo) break;
                     }
-                System.out.println("request count: " + requestCount);
+                LOGGER.info("request count: " + requestCount);
                 }
 //            }
             System.out.println("item save finished");
