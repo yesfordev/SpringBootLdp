@@ -70,8 +70,7 @@ public class LicenseBasicController {
         int requestCount = 0;
 
         try {
-//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // 15348 이상
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
 
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
@@ -89,9 +88,7 @@ public class LicenseBasicController {
                 while (true) {
                     String urlstr = "http://apis.data.go.kr/1611000/ArchPmsService/getApBasisOulnInfo?" +
                             "sigunguCd=" + sigungucd +
-//                            "sigunguCd=" + 11110 +
                             "&bjdongCd=" + bjdongcd +
-//                            "&bjdongCd=" + 16600 +
                             "&platGbCd=" + platGbCd +
                             "&numOfRows=" + numOfRows +
                             "&startDate=" + startDate +
@@ -100,8 +97,6 @@ public class LicenseBasicController {
                             "&_type=json" +
                             "&ServiceKey=" + serviceKey;
 
-//                    String urlstr = "http://apis.data.go.kr/1611000/ArchPmsService/getApBasisOulnInfo?sigunguCd=11230&bjdongCd=10300&platGbCd=0&numOfRows=20&_type=json&startDate=20150101&endDate=20150131&ServiceKey=VuQ26MnS93HYgPFpoeyIBLx0uzwHUoWpuroN1MRor5YFc5j6igIR1s8MU46278q8Iz55t3A84JD%2BxS%2F2W%2Fdzvg%3D%3D";
-
                     String result = "";
 
                     // IOException 발생 시, 최대 7번까지 재시도 로직
@@ -109,7 +104,6 @@ public class LicenseBasicController {
 
                     requestCount++;
 
-//                    System.out.println("result: " + result);.
 
                     totalCount = publicDataUtils.getTotalCount(result);
 

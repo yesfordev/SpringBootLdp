@@ -114,10 +114,11 @@ public class RegisterTitleController {
 
     /**
      * 서울의 창고시설만 찾아 DB에 insert하는 api
+     *
      * @return 완료 문구, requestCount
      */
     @GetMapping("/insertSeoul")
-//    @Transactional
+    @Transactional
     public String insertSeoulConstruct() {
 
         RegisterTitleRes registerTitleRes;
@@ -133,60 +134,58 @@ public class RegisterTitleController {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
-//                if (depth >= 3 && status == 1) {
-                    id = localCodeEntity.getId();
-                    String sigungucd = localCodeEntity.getSigunguCd();
-                    String bjdongcd = localCodeEntity.getBjdongCd();
-                    String name = localCodeEntity.getName();
+                id = localCodeEntity.getId();
+                String sigungucd = localCodeEntity.getSigunguCd();
+                String bjdongcd = localCodeEntity.getBjdongCd();
+                String name = localCodeEntity.getName();
 
-                    System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
+                System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
 
-                    int pageNo = 1;
+                int pageNo = 1;
 
-                    while (true) {
-                        String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
-                                "sigunguCd=" + sigungucd +
-                                "&bjdongCd=" + bjdongcd +
-                                "&platGbCd=" + platGbCd +
-                                "&numOfRows=" + numOfRows +
-                                "&pageNo=" + pageNo +
-                                "&_type=json" +
-                                "&ServiceKey=" + serviceKey;
+                while (true) {
+                    String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
+                            "sigunguCd=" + sigungucd +
+                            "&bjdongCd=" + bjdongcd +
+                            "&platGbCd=" + platGbCd +
+                            "&numOfRows=" + numOfRows +
+                            "&pageNo=" + pageNo +
+                            "&_type=json" +
+                            "&ServiceKey=" + serviceKey;
 
-                        requestCount++;
+                    requestCount++;
 
 
-                        String result = "";
+                    String result = "";
 
-                        // IOException 발생 시, 최대 10번까지 재시도 로직
-                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
+                    // IOException 발생 시, 최대 10번까지 재시도 로직
+                    result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        System.out.println("result: " + result);
+                    System.out.println("result: " + result);
 
-                        int countStart = result.indexOf("totalCount\":");
+                    int countStart = result.indexOf("totalCount\":");
 
-                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+                    totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
 
-                        if (totalCount >= 1) {
-                            registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
-                            }.getType());
+                    if (totalCount >= 1) {
+                        registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
+                        }.getType());
 
-                            List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
-                            totalCount = registerTitleRes.getResponse().getBody().getTotalCount().intValue();
+                        List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
+                        totalCount = registerTitleRes.getResponse().getBody().getTotalCount().intValue();
 
-                            for (Item item : itemList) {
-                                if (item.getMainPurpsCd().equals("18000")) {
-                                    RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-                                    registerTitleEntityRepository.save(registerTitleEntityTemp);
-                                    System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
-                                }
+                        for (Item item : itemList) {
+                            if (item.getMainPurpsCd().equals("18000")) {
+                                RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
+                                registerTitleEntityRepository.save(registerTitleEntityTemp);
+                                System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
                             }
-                            pageNo++;
-                        } else break;
+                        }
+                        pageNo++;
+                    } else break;
 
-                        if (totalCount / numOfRows + 1 < pageNo) break;
-                    }
-//                }
+                    if (totalCount / numOfRows + 1 < pageNo) break;
+                }
                 System.out.println("request count: " + requestCount);
             }
             System.out.println("item save finished");
@@ -205,14 +204,15 @@ public class RegisterTitleController {
 
     /**
      * 특정 시의 창고시설만 insert하는 api
+     *
      * @param localName 찾고 싶은 시
      * @return 완료 문구, requestCount
      */
     @GetMapping("/insertLocal/{localName}")
-//    @Transactional
+    @Transactional
     public String insertLocalConstruct(@PathVariable("localName") String localName) {
 
-        if(!localName.substring(localName.length()-1, localName.length()).equals("시")) {
+        if (!localName.substring(localName.length() - 1, localName.length()).equals("시")) {
             return "시 지명을 입력해주세요. ex) 이천시, 서울특별시";
         }
 
@@ -229,61 +229,59 @@ public class RegisterTitleController {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
-//                if (depth >= 3 && status == 1) {
-                    id = localCodeEntity.getId();
-                    String sigungucd = localCodeEntity.getSigunguCd();
-                    String bjdongcd = localCodeEntity.getBjdongCd();
-                    String name = localCodeEntity.getName();
+                id = localCodeEntity.getId();
+                String sigungucd = localCodeEntity.getSigunguCd();
+                String bjdongcd = localCodeEntity.getBjdongCd();
+                String name = localCodeEntity.getName();
 
-                    System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
+                System.out.println("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
 
-                    int pageNo = 1;
+                int pageNo = 1;
 
-                    while (true) {
-                        String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
-                                "sigunguCd=" + sigungucd +
-                                "&bjdongCd=" + bjdongcd +
-                                "&platGbCd=" + platGbCd +
-                                "&numOfRows=" + numOfRows +
-                                "&pageNo=" + pageNo +
-                                "&_type=json" +
-                                "&ServiceKey=" + serviceKey;
+                while (true) {
+                    String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
+                            "sigunguCd=" + sigungucd +
+                            "&bjdongCd=" + bjdongcd +
+                            "&platGbCd=" + platGbCd +
+                            "&numOfRows=" + numOfRows +
+                            "&pageNo=" + pageNo +
+                            "&_type=json" +
+                            "&ServiceKey=" + serviceKey;
 
-                        requestCount++;
+                    requestCount++;
 
-                        String result = "";
+                    String result = "";
 
-                        // IOException 발생 시, 최대 10번까지 재시도 로직
-                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
+                    // IOException 발생 시, 최대 10번까지 재시도 로직
+                    result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        System.out.println("result: " + result);
+                    System.out.println("result: " + result);
 
-                        int countStart = result.indexOf("totalCount\":");
+                    int countStart = result.indexOf("totalCount\":");
 
-                        totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
+                    totalCount = Integer.parseInt(result.substring(countStart + "totalCount\":".length(), result.length() - 3));
 
-                        if (totalCount >= 1) {
-                            registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
-                            }.getType());
+                    if (totalCount >= 1) {
+                        registerTitleRes = gson.fromJson(result, new TypeToken<RegisterTitleRes>() {
+                        }.getType());
 
-                            List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
-                            totalCount = registerTitleRes.getResponse().getBody().getTotalCount().intValue();
+                        List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
+                        totalCount = registerTitleRes.getResponse().getBody().getTotalCount().intValue();
 
-                            for (Item item : itemList) {
-                                if (item.getMainPurpsCd().equals("18000")) {
-                                    RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-                                    registerTitleEntityRepository.save(registerTitleEntityTemp);
-                                    System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
-                                }
+                        for (Item item : itemList) {
+                            if (item.getMainPurpsCd().equals("18000")) {
+                                RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
+                                registerTitleEntityRepository.save(registerTitleEntityTemp);
+                                System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
                             }
-                            pageNo++;
-                        } else break;
+                        }
+                        pageNo++;
+                    } else break;
 
-                        if (totalCount / numOfRows + 1 < pageNo) break;
-                    }
+                    if (totalCount / numOfRows + 1 < pageNo) break;
                 }
-                System.out.println("request count: " + requestCount);
-//            }
+            }
+            System.out.println("request count: " + requestCount);
             System.out.println("item save finished");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -300,10 +298,10 @@ public class RegisterTitleController {
 
     /**
      * 전국의 모든 지역 중 창고시설만 insert하는 api
+     *
      * @return
      */
     @GetMapping("/insertAll")
-//    @Transactional
     public String insertAllConstruct() {
 
         PublicDataUtils publicDataUtils = new PublicDataUtils();
@@ -313,59 +311,52 @@ public class RegisterTitleController {
 
         try {
             List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); //1113부터(부산) // 2865
-
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
 
-//                if (depth >= 3 && status == 1) {
-                    id = localCodeEntity.getId();
-                    String sigungucd = localCodeEntity.getSigunguCd();
-                    String bjdongcd = localCodeEntity.getBjdongCd();
-                    String name = localCodeEntity.getName();
+                id = localCodeEntity.getId();
+                String sigungucd = localCodeEntity.getSigunguCd();
+                String bjdongcd = localCodeEntity.getBjdongCd();
+                String name = localCodeEntity.getName();
 
-                    LOGGER.info("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
+                LOGGER.info("id: " + id + ", sigungucd: " + sigungucd + ", bjdongcd: " + bjdongcd + ", name: " + name + ", depth: " + depth + ", status: " + status);
 
-                    int pageNo = 1;
+                int pageNo = 1;
 
-                    while (true) {
-                        String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
-                                "sigunguCd=" + sigungucd +
-                                "&bjdongCd=" + bjdongcd +
-                                "&platGbCd=" + platGbCd +
-                                "&numOfRows=" + numOfRows +
-                                "&pageNo=" + pageNo +
-                                "&_type=json" +
-                                "&ServiceKey=" + serviceKey;
+                while (true) {
+                    String urlstr = "http://apis.data.go.kr/1611000/BldRgstService/getBrTitleInfo?" +
+                            "sigunguCd=" + sigungucd +
+                            "&bjdongCd=" + bjdongcd +
+                            "&platGbCd=" + platGbCd +
+                            "&numOfRows=" + numOfRows +
+                            "&pageNo=" + pageNo +
+                            "&_type=json" +
+                            "&ServiceKey=" + serviceKey;
 
-                        String result = "";
+                    String result = "";
 
-                        // IOException 발생 시, 최대 7번까지 재시도 로직
-                        result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
+                    result = retryTemplate.execute(context -> publicDataUtils.connectUrl(urlstr));
 
-                        requestCount++;
+                    requestCount++;
 
-//                        System.out.println("result: " + result);
+                    String finalResult = result;
+                    totalCount = retryTemplate.execute(context -> publicDataUtils.getTotalCount(finalResult));
 
-//                        totalCount = publicDataUtils.getTotalCount(result);
-                        String finalResult = result;
-                        totalCount = retryTemplate.execute(context ->publicDataUtils.getTotalCount(finalResult));
+                    if (totalCount == 1) {
+                        registerTitleService.saveRegistserTitle(gson, result);
 
-                        if(totalCount == 1) {
-                            registerTitleService.saveRegistserTitle(gson, result);
+                        break;
+                    } else if (totalCount > 1) {
+                        registerTitleService.saveRegisterTitleList(gson, totalCount, result);
 
-                            break;
-                        } else if (totalCount >1) {
-                            registerTitleService.saveRegisterTitleList(gson, totalCount, result);
+                        pageNo++;
+                    } else break;
 
-                            pageNo++;
-                        } else break;
-
-                        if (totalCount / numOfRows + 1 < pageNo) break;
-                    }
-                LOGGER.info("request count: " + requestCount);
+                    if (totalCount / numOfRows + 1 < pageNo) break;
                 }
+                LOGGER.info("request count: " + requestCount);
+            }
 //            }
             System.out.println("item save finished");
         } catch (UnsupportedEncodingException e) {
@@ -380,11 +371,4 @@ public class RegisterTitleController {
 
         return "construct All information insert success, requestCount: " + requestCount;
     }
-
-//    @ExceptionHandler(NumberFormatException.class)
-//    public String exceedsRequests(NumberFormatException e) {
-//        System.err.println(e.getClass());
-//        e.printStackTrace();
-//        return "건축물대장의 표제 조회의 일일 트래픽이 초과되었습니다. 이어서 수행해야 할 local_code id: " + id;
-//    }
 }

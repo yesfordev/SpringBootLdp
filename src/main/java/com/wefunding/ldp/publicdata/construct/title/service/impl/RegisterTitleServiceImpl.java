@@ -58,22 +58,12 @@ public class RegisterTitleServiceImpl implements RegisterTitleService {
 
         List<Item> itemList = registerTitleRes.getResponse().getBody().getItems().getItem();
 
-//        for (Item item : itemList) {
-//            if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
-//                RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-//                registerTitleEntityRepository.save(registerTitleEntityTemp);
-//                System.out.println("item save, rnum: " + registerTitleEntityTemp.getRnum() + ", pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());
-//            }
-//        }
-
         // 추가
         List<RegisterTitleEntity> entityList = new ArrayList<>();
 
         for (Item item : itemList) {
-//            if (item.getMainPurpsCd().equals("18000")) {    // 창고시설
-                RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
-                entityList.add(registerTitleEntityTemp);
-//            }
+            RegisterTitleEntity registerTitleEntityTemp = registerTitleMapper.toRegisterTitleEntity(item);
+            entityList.add(registerTitleEntityTemp);
         }
         registerTitleEntityRepository.saveAll(entityList);
         LOGGER.info("item List save, pageNo: " + registerTitleRes.getResponse().getBody().getPageNo());

@@ -45,7 +45,6 @@ public class LicenseDongController {
     public LicenseDongController(LocalCodeEntityRepository localCodeEntityRepository, LicenseDongService licenseDongService, RetryTemplate retryTemplate) {
         this.localCodeEntityRepository = localCodeEntityRepository;
         this.licenseDongService = licenseDongService;
-//        this.connectUrlUtils = connectUrlUtils;
         this.retryTemplate = retryTemplate;
     }
 
@@ -65,8 +64,7 @@ public class LicenseDongController {
         int requestCount = 0;
 
         try {
-//            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
-            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityListById(); // id>=42811
+            List<LocalCodeEntity> localCodeEntityList = localCodeEntityRepository.getLocalCodeEntityList();
             for (LocalCodeEntity localCodeEntity : localCodeEntityList) {
                 int depth = Integer.parseInt(localCodeEntity.getDepth());
                 int status = Integer.parseInt(localCodeEntity.getStatus());
@@ -91,8 +89,6 @@ public class LicenseDongController {
                             "&pageNo=" + pageNo +
                             "&_type=json" +
                             "&ServiceKey=" + serviceKey;
-
-//                    String urlstr = "http://apis.data.go.kr/1611000/ArchPmsService/getApBasisOulnInfo?sigunguCd=11230&bjdongCd=10300&platGbCd=0&numOfRows=20&_type=json&startDate=20150101&endDate=20150131&ServiceKey=VuQ26MnS93HYgPFpoeyIBLx0uzwHUoWpuroN1MRor5YFc5j6igIR1s8MU46278q8Iz55t3A84JD%2BxS%2F2W%2Fdzvg%3D%3D";
 
                     String result = "";
 
